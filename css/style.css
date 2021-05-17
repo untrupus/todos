@@ -1,0 +1,68 @@
+body {
+    font-family: 'Raleway', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.main {
+    width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.inputBlocks {
+    display: flex;
+    justify-content: space-between;
+}
+
+.addBlock {
+    width: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid black;
+    margin-bottom: 20px;
+}
+
+.btn {
+    margin: 0 20px;
+}
+
+.list {
+    text-align: left;
+    padding: 0;
+}
+
+.task {
+    list-style: none;
+    padding: 10px;
+    border-bottom: 1px solid darkgray;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.text {
+    flex-grow: 1;
+    margin-left: 15px;
+}
+
+.checked {
+    font-size: 30px;
+    color: green;
+    margin: 0;
+}
+
+.notChecked {
+    font-size: 30px;
+    color: lightgray;
+    margin: 0;
+}
+
+.btnBlock {
+    display: flex;
+    justify-content: space-around;
+    border-bottom: 1px solid black;
+    padding-bottom: 20px;
+}
