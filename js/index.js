@@ -14,35 +14,6 @@ const getFromLocalStorage = () => {
     }
 };
 
-const getActiveFromLocalStorage = () => {
-    const todosStr = localStorage.getItem('todos');
-    if (todosStr) {
-        let todos = JSON.parse(todosStr);
-        for (let i = 0; i < todos.length; i++) {
-            if (!todos[i].done) {
-                tasksList.push(todos[i]);
-            }
-        }
-    } else {
-        tasksList = [];
-    }
-};
-
-const getCompletedFromLocalStorage = () => {
-    const todosStr = localStorage.getItem('todos');
-    if (todosStr) {
-        let todos = JSON.parse(todosStr);
-
-        for (let i = 0; i < todos.length; i++) {
-            if (todos[i].done) {
-                tasksList.push(todos[i]);
-            }
-        }
-    } else {
-        tasksList = [];
-    }
-};
-
 const todosList = document.getElementById('list');
 
 const getTasks = () => {
@@ -68,12 +39,22 @@ const getTasks = () => {
 
             todosList.append(newTask);
 
-            document.getElementById('remove' + i).addEventListener('click', () => {
+            const changeTask = (data) => {
                 todosList.innerHTML = '';
                 getFromLocalStorage();
-                tasksList.splice(i, 1);
+
+                if (data) {
+                    tasksList.splice(i, 1, data);
+                } else {
+                    tasksList.splice(i, 1);
+                }
+
                 getTasks();
                 saveToLocalStorage(tasksList);
+            }
+
+            document.getElementById('remove' + i).addEventListener('click', () => {
+                changeTask();
             });
 
             document.getElementById('edit' + i).addEventListener('click', () => {
@@ -84,36 +65,23 @@ const getTasks = () => {
                     }
 
                     if (editedTask.text !== '') {
-                        todosList.innerHTML = '';
-                        getFromLocalStorage();
-                        tasksList.splice(i, 1, editedTask);
-                        getTasks();
-                        saveToLocalStorage(tasksList);
+                        changeTask(editedTask);
                         document.getElementById('input').value = '';
                     }
                 });
             });
 
             document.getElementById('done' + i).addEventListener('click', () => {
-
                 const editedTask = {
                     text: tasksList[i].text,
                     done: !tasksList[i].done
                 }
-
-                todosList.innerHTML = '';
-                getFromLocalStorage();
-                tasksList.splice(i, 1, editedTask);
-                getTasks();
-                saveToLocalStorage(tasksList);
+                changeTask(editedTask);
             });
         }
     } else {
         todosList.innerHTML = '<h3>There`s nothing here...</h3>'
     }
-
-
-
 };
 
 getFromLocalStorage();
@@ -143,29 +111,27 @@ document.getElementById('all').addEventListener('click', () => {
     getTasks();
 });
 
-document.getElementById('active').addEventListener('click', () => {
+const isComplete = (key, value) => {
+    getFromLocalStorage();
+    const result = tasksList.filter(task => task[key] === value);
     tasksList = [];
     todosList.innerHTML = '';
-    getActiveFromLocalStorage();
+    tasksList = tasksList.concat(result);
     getTasks();
+};
+
+document.getElementById('active').addEventListener('click', () => {
+    isComplete('done', false);
 });
 
 document.getElementById('complete').addEventListener('click', () => {
-    tasksList = [];
-    todosList.innerHTML = '';
-    getCompletedFromLocalStorage();
-    getTasks();
+    isComplete('done', true);
 });
 
 document.getElementById('find').addEventListener('click', () => {
     let word = document.getElementById('findText').value;
-    getFromLocalStorage();
     if (word !== '') {
-        const result = tasksList.filter(task => task.text === word);
-        tasksList = [];
-        todosList.innerHTML = '';
-        tasksList = tasksList.concat(result);
-        getTasks();
+        isComplete('text', word);
         document.getElementById('findText').value = '';
     }
 });
