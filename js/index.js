@@ -1,60 +1,114 @@
-model = {
+var model = {
     tasksList: [],
-    todosList: document.getElementById('list')
-}
-
-view = {
+    todosList: document.getElementById('list'),
+    saveToLocalStorage: function (data) {
+        var dataStr = JSON.stringify(data);
+        localStorage.setItem('todos', dataStr);
+    },
+    getFromLocalStorage: function () {
+        var todosStr = localStorage.getItem('todos');
+        if (todosStr) {
+            this.tasksList = JSON.parse(todosStr);
+        }
+        else {
+            this.tasksList = [];
+        }
+    },
+    addTodo: function () {
+        var _this = this;
+        document.getElementById('add').addEventListener('click', function () {
+            var value = document.getElementById('input').value;
+            if (value !== '') {
+                _this.tasksList.push({
+                    text: value,
+                    done: false
+                });
+            }
+            _this.saveToLocalStorage(model.tasksList);
+            document.getElementById('input').value = '';
+            model.todosList.innerHTML = '';
+            _this.getFromLocalStorage();
+            view.getTasks();
+        });
+    },
+    changeTask: function (i, data) {
+        this.todosList.innerHTML = '';
+        this.getFromLocalStorage();
+        if (data) {
+            this.tasksList.splice(i, 1, data);
+        }
+        else {
+            this.tasksList.splice(i, 1);
+        }
+        view.getTasks();
+        this.saveToLocalStorage(this.tasksList);
+    },
+    removeTodo: function (i) {
+        var _this = this;
+        document.getElementById('remove' + i).addEventListener('click', function () {
+            _this.changeTask(i);
+        });
+    },
+    editTodo: function (i) {
+        var _this = this;
+        document.getElementById('edit' + i).addEventListener('click', function () {
+            document.getElementById('input').value = model.tasksList[i].text;
+            document.getElementById('editTask').addEventListener('click', function () {
+                var editedTask = {
+                    text: document.getElementById('input').value,
+                    done: false
+                };
+                if (editedTask.text !== '') {
+                    _this.changeTask(i, editedTask);
+                    document.getElementById('input').value = '';
+                }
+            });
+        });
+    },
+    doneTodo: function (i) {
+        var _this = this;
+        document.getElementById('done' + i).addEventListener('click', function () {
+            var editedTask = {
+                text: model.tasksList[i].text,
+                done: !model.tasksList[i].done
+            };
+            _this.changeTask(i, editedTask);
+        });
+    }
+};
+var view = {
     getTasks: function () {
         if (model.tasksList.length > 0) {
-            for (let i = 0; i < model.tasksList.length; i++) {
-                const newTask = document.createElement('li');
+            for (var i = 0; i < model.tasksList.length; i++) {
+                var newTask = document.createElement('li');
                 newTask.className = 'task';
-                let checked;
-                let done;
+                var checked = void 0;
+                var done = void 0;
                 if (model.tasksList[i].done) {
-                    checked = '<p class="checked">&#9745;	</p>'
-                    done = 'Open'
-                } else {
-                    checked = '<p class="notChecked">&#9745;	</p>'
-                    done = 'Done'
+                    checked = '<p class="checked">&#9745;	</p>';
+                    done = 'Open';
                 }
-
-                newTask.innerHTML = (
-                    checked + `<p class="text">` +
+                else {
+                    checked = '<p class="notChecked">&#9745;	</p>';
+                    done = 'Done';
+                }
+                newTask.innerHTML = (checked + "<p class=\"text\">" +
                     model.tasksList[i].text +
-                    `</p>
-                <button type="button" class="btn" id="edit` + i + `">Edit</button>
-                <button type="button" class="btn" id="done` + i + `">` + done + `</button>
-                <button type="button" class="btn" id="remove` + i + `">Remove</button>`
-                );
-
+                    "</p>\n                <button type=\"button\" class=\"btn\" id=\"edit" + i + "\">Edit</button>\n                <button type=\"button\" class=\"btn\" id=\"done" + i + "\">" + done + "</button>\n                <button type=\"button\" class=\"btn\" id=\"remove" + i + "\">Remove</button>");
                 model.todosList.append(newTask);
                 controller.edit(i);
                 controller.done(i);
                 controller.remove(i);
             }
-        } else {
-            model.todosList.innerHTML = '<h3>There`s nothing here...</h3>'
+        }
+        else {
+            model.todosList.innerHTML = '<h3>There`s nothing here...</h3>';
         }
     }
-}
-
-controller = {
-    saveToLocalStorage: function (data) {
-        const dataStr = JSON.stringify(data);
-        localStorage.setItem('todos', dataStr);
-    },
-
-    getFromLocalStorage: function () {
-        const todosStr = localStorage.getItem('todos');
-        if (todosStr) {
-            model.tasksList = JSON.parse(todosStr);
-        } else {
-            model.tasksList = [];
-        }
-    },
+};
+var controller = {
     run: function () {
-        this.getFromLocalStorage();
+        model.getFromLocalStorage();
         view.getTasks();
         this.viewAll();
         this.showActive();
@@ -63,99 +117,53 @@ controller = {
         this.add();
     },
     add: function () {
-        document.getElementById('add').addEventListener('click', () => {
-            let value = document.getElementById('input').value;
-
-            if (value !== '') {
-                model.tasksList.push({
-                    text: value,
-                    done: false
-                });
-            }
-
-            this.saveToLocalStorage(model.tasksList);
-            document.getElementById('input').value = '';
-            model.todosList.innerHTML = '';
-            this.getFromLocalStorage();
-            view.getTasks();
-        });
-    },
-    changeTask: function (i, data) {
-        model.todosList.innerHTML = '';
-        this.getFromLocalStorage();
-
-        if (data) {
-            model.tasksList.splice(i, 1, data);
-        } else {
-            model.tasksList.splice(i, 1);
-        }
-
-        view.getTasks();
-        this.saveToLocalStorage(model.tasksList);
+        model.addTodo();
     },
     remove: function (i) {
-        document.getElementById('remove' + i).addEventListener('click', () => {
-            this.changeTask(i);
-        })
-    },
-    edit: function (i) {
-        document.getElementById('edit' + i).addEventListener('click', () => {
-            document.getElementById('input').value = model.tasksList[i].text;
-            document.getElementById('editTask').addEventListener('click', () => {
-                const editedTask = {
-                    text: document.getElementById('input').value
-                }
-
-                if (editedTask.text !== '') {
-                    this.changeTask(i, editedTask);
-                    document.getElementById('input').value = '';
-                }
-            });
-        });
+        model.removeTodo(i);
     },
     done: function (i) {
-        document.getElementById('done' + i).addEventListener('click', () => {
-            const editedTask = {
-                text: model.tasksList[i].text,
-                done: !model.tasksList[i].done
-            }
-            this.changeTask(i, editedTask);
-        });
+        model.doneTodo(i);
+    },
+    edit: function (i) {
+        model.editTodo(i);
     },
     viewAll: function () {
-        document.getElementById('all').addEventListener('click', () => {
+        document.getElementById('all').addEventListener('click', function () {
             model.todosList.innerHTML = '';
-            this.getFromLocalStorage();
+            model.getFromLocalStorage();
             view.getTasks();
         });
     },
     isComplete: function (key, value) {
-        this.getFromLocalStorage();
-        const result = model.tasksList.filter(task => task[key] === value);
+        model.getFromLocalStorage();
+        var result = model.tasksList.filter(function (task) { return task[key] === value; });
         model.tasksList = [];
         model.todosList.innerHTML = '';
         model.tasksList = model.tasksList.concat(result);
         view.getTasks();
     },
     showActive: function () {
-        document.getElementById('active').addEventListener('click', () => {
-            this.isComplete('done', false);
+        var _this = this;
+        document.getElementById('active').addEventListener('click', function () {
+            _this.isComplete('done', false);
         });
     },
     showComplete: function () {
-        document.getElementById('complete').addEventListener('click', () => {
-            this.isComplete('done', true);
+        var _this = this;
+        document.getElementById('complete').addEventListener('click', function () {
+            _this.isComplete('done', true);
         });
     },
     find: function () {
-        document.getElementById('find').addEventListener('click', () => {
-            let word = document.getElementById('findText').value;
+        var _this = this;
+        document.getElementById('find').addEventListener('click', function () {
+            var word = document.getElementById('findText').value;
             if (word !== '') {
-                this.isComplete('text', word);
+                _this.isComplete('text', word);
                 document.getElementById('findText').value = '';
             }
         });
     }
-}
-
+};
 controller.run();
