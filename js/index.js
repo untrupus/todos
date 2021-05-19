@@ -1,11 +1,9 @@
-var model = {
-    tasksList: [],
-    todosList: document.getElementById('list'),
-    saveToLocalStorage: function (data) {
-        var dataStr = JSON.stringify(data);
-        localStorage.setItem('todos', dataStr);
-    },
-    getFromLocalStorage: function () {
+var Model = /** @class */ (function () {
+    function Model() {
+        this.tasksList = [];
+        this.todosList = document.getElementById('list');
+    }
+    Model.prototype.getFromLocalStorage = function () {
         var todosStr = localStorage.getItem('todos');
         if (todosStr) {
             this.tasksList = JSON.parse(todosStr);
@@ -13,8 +11,12 @@ var model = {
         else {
             this.tasksList = [];
         }
-    },
-    addTodo: function () {
+    };
+    Model.prototype.saveToLocalStorage = function (data) {
+        var dataStr = JSON.stringify(data);
+        localStorage.setItem('todos', dataStr);
+    };
+    Model.prototype.addTodo = function (handler) {
         var _this = this;
         document.getElementById('add').addEventListener('click', function () {
             var value = document.getElementById('input').value;
@@ -24,14 +26,14 @@ var model = {
                     done: false
                 });
             }
-            _this.saveToLocalStorage(model.tasksList);
+            _this.saveToLocalStorage(_this.tasksList);
             document.getElementById('input').value = '';
-            model.todosList.innerHTML = '';
+            _this.todosList.innerHTML = '';
             _this.getFromLocalStorage();
-            view.getTasks();
+            handler();
         });
-    },
-    changeTask: function (i, data) {
+    };
+    Model.prototype.changeTask = function (i, data) {
         this.todosList.innerHTML = '';
         this.getFromLocalStorage();
         if (data) {
@@ -40,19 +42,19 @@ var model = {
         else {
             this.tasksList.splice(i, 1);
         }
-        view.getTasks();
+        // view.getTasks();
         this.saveToLocalStorage(this.tasksList);
-    },
-    removeTodo: function (i) {
+    };
+    Model.prototype.removeTodo = function (i) {
         var _this = this;
         document.getElementById('remove' + i).addEventListener('click', function () {
             _this.changeTask(i);
         });
-    },
-    editTodo: function (i) {
+    };
+    Model.prototype.editTodo = function (i) {
         var _this = this;
         document.getElementById('edit' + i).addEventListener('click', function () {
-            document.getElementById('input').value = model.tasksList[i].text;
+            document.getElementById('input').value = _this.tasksList[i].text;
             document.getElementById('editTask').addEventListener('click', function () {
                 var editedTask = {
                     text: document.getElementById('input').value,
@@ -64,27 +66,30 @@ var model = {
                 }
             });
         });
-    },
-    doneTodo: function (i) {
+    };
+    Model.prototype.doneTodo = function (i) {
         var _this = this;
         document.getElementById('done' + i).addEventListener('click', function () {
             var editedTask = {
-                text: model.tasksList[i].text,
-                done: !model.tasksList[i].done
+                text: _this.tasksList[i].text,
+                done: !_this.tasksList[i].done
             };
             _this.changeTask(i, editedTask);
         });
+    };
+    return Model;
+}());
+var View = /** @class */ (function () {
+    function View() {
     }
-};
-var view = {
-    getTasks: function () {
-        if (model.tasksList.length > 0) {
-            for (var i = 0; i < model.tasksList.length; i++) {
+    View.prototype.getTasks = function (tasks) {
+        if (tasks.length > 0) {
+            for (var i = 0; i < tasks.length; i++) {
                 var newTask = document.createElement('li');
                 newTask.className = 'task';
                 var checked = void 0;
                 var done = void 0;
-                if (model.tasksList[i].done) {
+                if (tasks[i].done) {
                     checked = '<p class="checked">&#9745;	</p>';
                     done = 'Open';
                 }
@@ -93,69 +98,73 @@ var view = {
                     done = 'Done';
                 }
                 newTask.innerHTML = (checked + "<p class=\"text\">" +
-                    model.tasksList[i].text +
+                    tasks[i].text +
                     "</p>\n                <button type=\"button\" class=\"btn\" id=\"edit" + i + "\">Edit</button>\n                <button type=\"button\" class=\"btn\" id=\"done" + i + "\">" + done + "</button>\n                <button type=\"button\" class=\"btn\" id=\"remove" + i + "\">Remove</button>");
-                model.todosList.append(newTask);
-                controller.edit(i);
-                controller.done(i);
-                controller.remove(i);
+                // model.todosList.append(newTask);
+                // controller.edit(i);
+                // controller.done(i);
+                // controller.remove(i);
             }
         }
         else {
-            model.todosList.innerHTML = '<h3>There`s nothing here...</h3>';
+            // model.todosList.innerHTML = '<h3>There`s nothing here...</h3>'
         }
-    }
-};
-var controller = {
-    run: function () {
-        model.getFromLocalStorage();
-        view.getTasks();
+    };
+    return View;
+}());
+var Controller = /** @class */ (function () {
+    function Controller(model, view) {
+        this.model = model;
+        this.view = view;
+        this.model.getFromLocalStorage();
+        this.view.getTasks(this.model.tasksList);
         this.viewAll();
         this.showActive();
         this.showComplete();
         this.find();
-        this.add();
-    },
-    add: function () {
-        model.addTodo();
-    },
-    remove: function (i) {
-        model.removeTodo(i);
-    },
-    done: function (i) {
-        model.doneTodo(i);
-    },
-    edit: function (i) {
-        model.editTodo(i);
-    },
-    viewAll: function () {
+        this.add(this.view.getTasks(this.model.tasksList));
+    }
+    Controller.prototype.add = function (handler) {
+        this.model.addTodo(handler);
+    };
+    Controller.prototype.remove = function (i) {
+        this.model.removeTodo(i);
+    };
+    Controller.prototype.done = function (i) {
+        this.model.doneTodo(i);
+    };
+    Controller.prototype.edit = function (i) {
+        this.model.editTodo(i);
+    };
+    Controller.prototype.viewAll = function () {
+        var _this = this;
         document.getElementById('all').addEventListener('click', function () {
-            model.todosList.innerHTML = '';
-            model.getFromLocalStorage();
-            view.getTasks();
+            _this.model.todosList.innerHTML = '';
+            _this.model.getFromLocalStorage();
+            _this.view.getTasks(_this.model.tasksList);
         });
-    },
-    isComplete: function (key, value) {
-        model.getFromLocalStorage();
-        var result = model.tasksList.filter(function (task) { return task[key] === value; });
-        model.tasksList = [];
-        model.todosList.innerHTML = '';
-        model.tasksList = model.tasksList.concat(result);
-        view.getTasks();
-    },
-    showActive: function () {
+    };
+    Controller.prototype.isComplete = function (key, value) {
+        this.model.getFromLocalStorage();
+        var result = this.model.tasksList.filter(function (task) { return task[key] === value; });
+        this.model.tasksList = [];
+        this.model.todosList.innerHTML = '';
+        this.model.tasksList = this.model.tasksList.concat(result);
+        this.view.getTasks(this.model.tasksList);
+    };
+    Controller.prototype.showActive = function () {
         var _this = this;
         document.getElementById('active').addEventListener('click', function () {
             _this.isComplete('done', false);
         });
-    },
-    showComplete: function () {
+    };
+    Controller.prototype.showComplete = function () {
         var _this = this;
         document.getElementById('complete').addEventListener('click', function () {
             _this.isComplete('done', true);
         });
-    },
-    find: function () {
+    };
+    Controller.prototype.find = function () {
         var _this = this;
         document.getElementById('find').addEventListener('click', function () {
             var word = document.getElementById('findText').value;
@@ -164,6 +173,7 @@ var controller = {
                 document.getElementById('findText').value = '';
             }
         });
-    }
-};
-controller.run();
+    };
+    return Controller;
+}());
+var app = new Controller(new Model(), new View());

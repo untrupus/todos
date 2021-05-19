@@ -3,22 +3,30 @@ interface todoObj {
     done: boolean
 }
 
-const model = {
-    tasksList: [],
-    todosList: document.getElementById('list'),
-    saveToLocalStorage: function (data: todoObj[]): void {
-        const dataStr: string = JSON.stringify(data);
-        localStorage.setItem('todos', dataStr);
-    },
-    getFromLocalStorage: function (): void {
+class Model {
+    tasksList: todoObj[]
+    todosList
+
+    constructor() {
+        this.tasksList = []
+        this.todosList = document.getElementById('list')
+    }
+
+    getFromLocalStorage(): void {
         const todosStr: string = localStorage.getItem('todos');
         if (todosStr) {
             this.tasksList = JSON.parse(todosStr);
         } else {
             this.tasksList = [];
         }
-    },
-    addTodo: function (): void {
+    }
+
+    saveToLocalStorage(data: todoObj[]): void {
+        const dataStr: string = JSON.stringify(data);
+        localStorage.setItem('todos', dataStr);
+    }
+
+    addTodo(): void {
         document.getElementById('add').addEventListener('click', (): void => {
             let value: string = (<HTMLInputElement>document.getElementById('input')).value;
 
@@ -29,14 +37,15 @@ const model = {
                 });
             }
 
-            this.saveToLocalStorage(model.tasksList);
+            this.saveToLocalStorage(this.tasksList);
             (<HTMLInputElement>document.getElementById('input')).value = '';
-            model.todosList.innerHTML = '';
+            this.todosList.innerHTML = '';
             this.getFromLocalStorage();
-            view.getTasks();
+
         });
-    },
-    changeTask: function (i, data?): void {
+    }
+
+    changeTask(i, data?): void {
         this.todosList.innerHTML = '';
         this.getFromLocalStorage();
 
@@ -46,17 +55,19 @@ const model = {
             this.tasksList.splice(i, 1);
         }
 
-        view.getTasks();
+        // view.getTasks();
         this.saveToLocalStorage(this.tasksList);
-    },
-    removeTodo: function (i: number): void {
+    }
+
+    removeTodo(i: number): void {
         document.getElementById('remove' + i).addEventListener('click', (): void => {
             this.changeTask(i);
         })
-    },
-    editTodo: function (i: number): void {
+    }
+
+    editTodo(i: number): void {
         document.getElementById('edit' + i).addEventListener('click', (): void => {
-            (<HTMLInputElement>document.getElementById('input')).value = model.tasksList[i].text;
+            (<HTMLInputElement>document.getElementById('input')).value = this.tasksList[i].text;
             document.getElementById('editTask').addEventListener('click', (): void => {
                 const editedTask: todoObj = {
                     text: (<HTMLInputElement>document.getElementById('input')).value,
@@ -69,27 +80,33 @@ const model = {
                 }
             });
         });
-    },
-    doneTodo: function (i: number): void {
+    }
+
+    doneTodo(i: number): void {
         document.getElementById('done' + i).addEventListener('click', (): void => {
             const editedTask: todoObj = {
-                text: model.tasksList[i].text,
-                done: !model.tasksList[i].done
+                text: this.tasksList[i].text,
+                done: !this.tasksList[i].done
             }
             this.changeTask(i, editedTask);
         });
-    },
+    }
 }
 
-const view = {
-    getTasks: function (): void {
-        if (model.tasksList.length > 0) {
-            for (let i = 0; i < model.tasksList.length; i++) {
+
+class View {
+    constructor() {
+
+    }
+
+    getTasks(tasks): void {
+        if (tasks.length > 0) {
+            for (let i = 0; i < tasks.length; i++) {
                 const newTask = document.createElement('li');
                 newTask.className = 'task';
                 let checked: string;
                 let done: string;
-                if (model.tasksList[i].done) {
+                if (tasks[i].done) {
                     checked = '<p class="checked">&#9745;	</p>'
                     done = 'Open'
                 } else {
@@ -99,76 +116,87 @@ const view = {
 
                 newTask.innerHTML = (
                     checked + `<p class="text">` +
-                    model.tasksList[i].text +
+                    tasks[i].text +
                     `</p>
                 <button type="button" class="btn" id="edit` + i + `">Edit</button>
                 <button type="button" class="btn" id="done` + i + `">` + done + `</button>
                 <button type="button" class="btn" id="remove` + i + `">Remove</button>`
                 );
 
-                model.todosList.append(newTask);
-                controller.edit(i);
-                controller.done(i);
-                controller.remove(i);
+                // model.todosList.append(newTask);
+                // controller.edit(i);
+                // controller.done(i);
+                // controller.remove(i);
             }
         } else {
-            model.todosList.innerHTML = '<h3>There`s nothing here...</h3>'
+            // model.todosList.innerHTML = '<h3>There`s nothing here...</h3>'
         }
     }
 }
 
-const controller = {
-    run: function (): void {
-        model.getFromLocalStorage();
-        view.getTasks();
+class Controller {
+    model: any
+    view: any
+
+    constructor(model: any, view: any) {
+        this.model = model
+        this.view = view
+
+        this.model.getFromLocalStorage();
+        this.view.getTasks(this.model.tasksList);
         this.viewAll();
         this.showActive();
         this.showComplete();
         this.find();
-        this.add();
-    },
-    add: function (): void {
-        model.addTodo();
-    },
+        this.add(this.view.getTasks(this.model.tasksList));
+    }
 
-    remove: function (i: number): void {
-        model.removeTodo(i)
-    },
+    add(): void {
+        this.model.addTodo();
+    }
 
-    done: function (i): void {
-      model.doneTodo(i);
-    },
+    remove(i: number): void {
+        this.model.removeTodo(i)
+    }
 
-    edit: function (i): void {
-      model.editTodo(i);
-    },
+    done(i): void {
+        this.model.doneTodo(i);
+    }
 
-    viewAll: function (): void {
+    edit(i): void {
+        this.model.editTodo(i);
+    }
+
+    viewAll(): void {
         document.getElementById('all').addEventListener('click', (): void => {
-            model.todosList.innerHTML = '';
-            model.getFromLocalStorage();
-            view.getTasks();
+            this.model.todosList.innerHTML = '';
+            this.model.getFromLocalStorage();
+            this.view.getTasks(this.model.tasksList);
         });
-    },
-    isComplete: function (key: string, value: string | boolean): void {
-        model.getFromLocalStorage();
-        const result: todoObj[] = model.tasksList.filter(task => task[key] === value);
-        model.tasksList = [];
-        model.todosList.innerHTML = '';
-        model.tasksList = model.tasksList.concat(result);
-        view.getTasks();
-    },
-    showActive: function (): void {
+    }
+
+    isComplete(key: string, value: string | boolean): void {
+        this.model.getFromLocalStorage();
+        const result: todoObj[] = this.model.tasksList.filter(task => task[key] === value);
+        this.model.tasksList = [];
+        this.model.todosList.innerHTML = '';
+        this.model.tasksList = this.model.tasksList.concat(result);
+        this.view.getTasks(this.model.tasksList);
+    }
+
+    showActive(): void {
         document.getElementById('active').addEventListener('click', (): void => {
             this.isComplete('done', false);
         });
-    },
-    showComplete: function (): void {
+    }
+
+    showComplete(): void {
         document.getElementById('complete').addEventListener('click', (): void => {
             this.isComplete('done', true);
         });
-    },
-    find: function (): void {
+    }
+
+    find(): void {
         document.getElementById('find').addEventListener('click', (): void => {
             let word: string = (<HTMLInputElement>document.getElementById('findText')).value;
             if (word !== '') {
@@ -177,6 +205,7 @@ const controller = {
             }
         });
     }
+
 }
 
-controller.run();
+const app = new Controller(new Model(), new View());
